@@ -1,0 +1,311 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passphrase Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #48bb78; /* Tailwind's green-500 */
+            cursor: pointer;
+            border-radius: 50%;
+            border: 0;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #48bb78; /* Tailwind's green-500 */
+            cursor: pointer;
+            border-radius: 50%;
+            border: 0;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex justify-center items-center min-h-screen p-4">
+    <div class="bg-gray-800 rounded-xl shadow-lg p-8 w-full max-w-md">
+        <h1 class="text-2xl font-semibold mb-6 text-center text-gray-200">Passphrase Generator</h1>
+
+        <div class="bg-gray-700 rounded-md p-4 mb-6">
+            <p id="generatedPassphrase" class="text-2xl font-bold text-center text-green-400 break-words flex-grow">Generate Phrase</p>
+        </div>
+
+        <div class="mb-6">
+            <label for="phraseLength" class="block text-sm font-medium text-gray-300 mb-2">Phrase Length: <span id="phraseLengthValue">4</span> words</label>
+            <input type="range" id="phraseLength" min="2" max="20" value="4" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-green-500">
+        </div>
+
+        <div class="mb-4">
+            <label for="wordComplexity" class="block text-sm font-medium text-gray-300 mb-2">Word Complexity:</label>
+            <select id="wordComplexity" class="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                <option value="easy">Easy to Remember</option>
+                <option value="hard">Hard to Guess</option>
+                <option value="french">French</option>
+                <option value="german">German</option>
+                <option value="spanish">Spanish</option>
+                <option value="mixed">Mixed Languages</option>
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <label for="separator" class="block text-sm font-medium text-gray-300 mb-2">Separator:</label>
+            <select id="separator" class="w-full bg-gray-700 border-gray-600 text-white rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                <option value="-">-</option>
+                <option value="_">_</option>
+                <option value="+">+</option>
+            </select>
+        </div>
+    </div>
+
+    <script>
+        const phraseLengthSlider = document.getElementById("phraseLength");
+        const phraseLengthValue = document.getElementById("phraseLengthValue");
+        const generatedPassphraseDisplay = document.getElementById("generatedPassphrase");
+        const wordComplexitySelect = document.getElementById("wordComplexity");
+        const separatorSelect = document.getElementById("separator");
+
+
+        const easyWords = [
+            "happy", "sunny", "day", "blue", "sky", "kind", "calm", "gentle", "warm", "bright",
+            "smile", "laugh", "peace", "love", "joy", "home", "family", "friend", "play", "fun",
+            "good", "nice", "best", "cool", "easy", "free", "time", "year", "week", "month",
+            "open", "close", "start", "end", "here", "there", "high", "low", "big", "small",
+            "fast", "slow", "run", "walk", "talk", "sing", "dance", "read", "write", "learn",
+            "work", "help", "give", "take", "make", "find", "lose", "keep", "try", "true",
+            "safe", "light", "dark", "soft", "hard", "cold", "hot", "wet", "dry", "new",
+            "old", "same", "different", "right", "wrong", "yes", "no", "one", "two", "three",
+            "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "today",
+            "tomorrow", "yesterday", "morning", "evening", "night", "summer", "winter", "spring", "autumn", "fall",
+            "red", "blue", "green", "yellow", "black", "white", "pretty", "smart", "clever", "brave",
+            "quiet", "loud", "clear", "cloudy", "windy", "rainy", "snowy", "happy", "sad", "angry",
+            "tired", "hungry", "thirsty", "awake", "asleep", "busy", "lazy", "ready", "steady", "go",
+            "act", "add", "age", "ago", "aid", "aim", "air", "all", "and", "any", "arm", "art", "ask", "bad", "bag", "bar", "bat", "bay", "bed", "bee", "beg", "bet", "bid", "bit", "box", "boy", "but", "buy", "car", "cat", "cry", "cup", "cut", "dad", "day", "die", "dig", "dog", "dry", "ear", "eat", "egg", "end", "far", "fat", "few", "fit", "fly", "for", "fun", "get", "god", "gum", "guy", "had", "has", "hat", "hay", "hit", "hot", "how", "ill", "its", "job", "joy", "key", "kid", "kin", "lab", "law", "lay", "led", "leg", "let", "lie", "lot", "mad", "map", "may", "men", "met", "mix", "mow", "mud", "net", "new", "nod", "not", "now", "odd", "off", "old", "one", "out", "own", "pay", "pet", "pig", "pin", "put", "raw", "red", "rid", "rub", "run", "sad", "say", "see", "set", "she", "sit", "six", "son", "sun", "tag", "tan", "tax", "tea", "ten", "the", "tip", "top", "try", "two", "use", "way", "who", "why", "win", "wit", "yes", "yet", "you", "zoo"
+        ];
+
+        const hardWords = [
+            "abundance", "bewilder", "capricious", "daunting", "ephemeral", "fastidious", "gregarious", "labyrinthine",
+            "mellifluous", "nefarious", "obfuscate", "perfunctory", "quixotic", "rambunctious", "serendipity", "tenacious",
+            "ubiquitous", "voracious", "whimsical", "zealous", "acquiesce", "belligerent", "cacophony", "deleterious",
+            "effervescent", "fallacious", "garrulous", "idiosyncratic", "juxtapose", "lachrymose", "mellifluous", "nonchalant",
+            "ostentatious", "pernicious", "querulous", "recalcitrant", "sagacious", "taciturn", "unfathomable", "vicissitude",
+            "winsome", "xenophobic", "aberration", "bombastic", "circumlocution", "desultory", "evanescent", "fatuous",
+            "hackneyed", "impetuous", "jejune", "knavery", "languid", "maudlin", "obstreperous", "parsimonious", "ratiocination",
+            "salubrious", "truculent", "umbrage", "vacillate", "wary", "yokel", "adroit", "benevolent", "cogent",
+            "diffident", "elucidate", "fervent", "histrionic", "ineffable", "jocund", "kowtow", "lethargic", "maladroit",
+            "narcissistic", "obdurate", "palpable", "rhetoric", "sanctimonious", "turgid", "unscrupulous", "verdant",
+            "wistful", "zephyr", "abnegation", "abscond", "acrimonious", "adumbrate", "anathema", "apotheosis", "asperity", "assiduous", "attenuate", "auspicious",
+            "baleful", "bathos", "bellicose", "bilious", "boorish", "bowdlerize", "bravura", "brickbat", "bumptious", "cajole", "calumny",
+            "canard", "castigation", "cavil", "chary", "chicanery", "circumscribe", "clandestine", "cogent", "collusion", "compunction",
+            "conflagration", "contumacious", "crepuscular", "dearth", "debacle", "deleterious", "denouement", "desuetude", "diaphanous", "dichotomy",
+            "dilatory", "dirge", "discomfit", "disingenuous", "dissimulate", "dither", "ebullient", "effete", "egregious", "elegy",
+            "emollient", "encomium", "ersatz", "eschew", "eviscerate", "execrable", "expiate", "expunge", "extirpate", "fatuous",
+            "fecund", "fervid", "flagitious", "fulminate", "gainsay", "garner", "gauche", "hegemony", "hoi polloi", "impecunious",
+            "impetus", "inexorable", "insouciant", "internecine", "intransigent", "inveigle", "irascible", "jettison", "jingoism", "kismet",
+            "laconic", "largess", "lascivious", "legerdemain", "limpid", "lithe", "lugubrious", "macabre", "maelstrom", "maladroit",
+            "malinger", "maverick", "mendacious", "meretricious", "mettlesome", "miasma", "minatory", "modicum", "moribund", "munificent",
+            "myopic", "nadir", "nascent", "negligible", "nemesis", "noxious", "numinous", "obdurate", "obloquy", "obsequious",
+            "ossify", "palliate", "panacea", "paragon", "pariah", "parsimonious", "pathos", "pecuniary", "penurious", "peregrination",
+            "peremptory", "perfidious", "perspicacious", "petulant", "phlegmatic", "pinnacle", "plaintive", "plenitude", "plethora", "pontificate",
+            "portentous", "precipitous", "prevaricate", "probity", "prodigal", "prolix", "propensity", "prosaic", "puerile", "puissant",
+            "punctilious", "pusillanimous", "quagmire", "quandary", "quiescent", "quisling", "raconteur", "raillery", "rapprochement", "recondite",
+            "redolent", "refulgent", "remunerate", "reticent", "ribald", "risible", "ruminate", "sagacious", "salient", "sardonic",
+            "saturnine", "scintillating", "scrupulous", "sedulous", "sententious", "serpentine", "shambolic", "sibylline", "simulacrum", "solicitous",
+            "sophistry", "sordid", "specious", "stentorian", "stolid", "subterfuge", "supercilious", "surreptitious", "sycophant", "taciturn",
+            "tantamount", "tendentious", "tergiversation", "thesaurus", "timorous", "torpid", "trenchant", "truculent", "turgid", "ubiquitous",
+            "unctuous", "undulating", "upbraid", "uxorious", "vacuous", "vapid", "venal", "veracity", "verbose", "verdant",
+            "vestige", "vex", "vicissitude", "virulent", "vitriolic", "vituperate", "vociferous", "voracious", "waggish",
+            "wanton", "winsome", "wistful", "zealous"
+        ];
+
+        const frenchWords = [
+            "amour", "soleil", "lune", "etoile", "ciel", "mer", "arbre", "fleur", "joie", "paix",
+            "bonheur", "temps", "annee", "jour", "nuit", "maison", "famille", "ami", "jeu", "rire",
+            "bien", "beau", "frais", "libre", "ouvert", "ferme", "haut", "bas", "grand", "petit",
+            "vite", "lent", "courir", "marcher", "parler", "chanter", "danser", "lire", "ecrire", "apprendre",
+            "travail", "aide", "donner", "prendre", "faire", "trouver", "perdre", "garder", "essayer", "vrai",
+            "sur", "sous", "dans", "hors", "avec", "sans", "avant", "apres", "depuis", "jusqua",
+            "pendant", "parceque", "alors", "tres", "plus", "moins", "beaucoup", "peu", "aussi", "meme",
+            "jamais", "toujours", "souvent", "parfois", "encore", "fois", "tot", "aujourdhui", "demain", "hier",
+            "matin", "soir", "ete", "hiver", "printemps", "automne", "rouge", "bleu", "vert", "jaune",
+            "noir", "blanc", "joli", "intelligent", "malin", "courageux", "calme", "bruyant", "clair", "nuageux",
+            "venteux", "pluvieux", "neigeux", "heureux", "triste", "fache", "fatigue", "affame", "assoiffe", "reveille", "endormi",
+            "occupe", "paresseux", "pret", "stable", "aller",
+            "abats", "abces", "abri", "acajou", "achat", "acier", "acte", "adirer", "ados", "afin", "age", "agile", "aieul", "ail",
+            "air", "aise", "ajout", "alerte", "alibi", "amas", "ambre", "ame", "amer", "ami", "amibe", "amont", "amour",
+            "an", "ane", "ange", "angle", "animer", "ansi", "août", "apais", "api", "apt", "aragorn", "arc", "ardent",
+            "arene", "argent", "arme", "arome", "art", "as", "assez", "astre", "atout", "aulx", "aura", "aube", "auge",
+            "auvent", "avais", "axel", "ayant", "azur", "bac", "bafouer", "bahut", "bail", "baiser", "bal", "balai", "bambin",
+            "banal", "banc", "bandit", "barbe", "baron", "bas", "bast", "beau", "bebe", "bec", "bel", "bercail", "beret",
+            "besace", "betail", "beugler", "biberon", "bic", "bide", "bien", "bigot", "bijou", "bilan", "bille", "bio", "bise",
+            "bison", "bitume", "bleu", "blotir", "bob", "boeuf", "bon", "bond", "botte", "bouc", "boucle", "boue", "bouleau",
+            "bourse", "bout", "boxer", "boyau", "bravo", "bref", "brin", "brio", "broc", "bruit", "brun", "bu", "but", "byte"
+        ];
+
+        const germanWords = [
+            "liebe", "sonne", "mond", "stern", "himmel", "meer", "baum", "blume", "freude", "frieden",
+            "glueck", "zeit", "jahr", "tag", "nacht", "haus", "familie", "freund", "spiel", "spass",
+            "gut", "schoen", "frisch", "frei", "offen", "geschlossen", "hoch", "niedrig", "gross", "klein",
+            "schnell", "langsam", "laufen", "gehen", "reden", "singen", "tanzen", "lesen", "schreiben", "lernen",
+            "arbeit", "hilfe", "geben", "nehmen", "machen", "finden", "verlieren", "behalten", "versuchen", "wahr",
+            "sicher", "hell", "dunkel", "weich", "hart", "kalt", "heiss", "nass", "trocken", "neu",
+            "alt", "gleich", "anders", "richtig", "falsch", "ja", "nein", "eins", "zwei", "drei",
+            "vier", "fuenf", "sechs", "sieben", "acht", "neun", "zehn", "elf", "zwoelf", "heute",
+            "morgen", "gestern", "morgen", "abend", "nacht", "sommer", "winter", "fruehling", "herbst",
+            "rot", "blau", "gruen", "gelb", "schwarz", "weiss", "huebsch", "klug", "schlau", "tapfer",
+            "ruhig", "laut", "klar", "bewoelkt", "windig", "regnerisch", "schneebedeckt", "gluecklich", "traurig", "aergerlich",
+            "muede", "hungrig", "durstig", "wach", "schlafend", "beschaeftigt", "faul", "bereit", "stabil", "gehen",
+            "abend", "ach", "acker", "adel", "adler", "ahnen", "allee", "alpen", "altar", "ameise", "amt", "angel", "angst", "anmut", "apfel", "april", "arm", "art", "arzt",
+            "atem", "auge", "aus", "auto", "bach", "bar", "bart", "bass", "baum", "beet", "bein", "berg", "bett", "bild", "blau", "blick", "blume", "boot",
+            "brot", "bruch", "brust", "buch", "bunt", "burg", "bus", "dank", "darm", "dorf", "dose", "draht", "drang", "dreck", "durst", "eben", "echo", "edel",
+            "eher", "ehr", "ei", "eile", "eis", "elf", "elend", "ende", "eng", "erz", "essig", "etwa", "eule", "exil", "fach", "faden", "fall", "falte",
+            "fang", "farbe", "farn", "fast", "faul", "fels", "fest", "fett", "feuer", "fibel", "fink", "fisch", "fleck", "flur", "fluss", "folk", "form",
+            "foto", "frag", "frech", "frosch", "froh", "frueh", "fuchs", "fuge", "fuhr", "fund", "fuss", "gabe", "gang", "ganz", "gas", "gast", "gatte", "gaul",
+            "geb", "gebet", "geld", "gelb", "gem", "gern", "gier", "gift", "gipfel", "glanz", "glas", "glatt", "gold", "grab", "gras", "grau", "greis", "griff",
+            "groll", "grund", "gruss", "haar", "hahn", "hals", "hand", "hang", "hart", "hass", "haupt", "haut", "heer", "hehl", "heil", "heim", "hell", "herz"
+        ];
+
+        const spanishWords = [
+            "amor", "sol", "luna", "estrella", "cielo", "mar", "arbol", "flor", "alegria", "paz",
+            "felicidad", "tiempo", "ano", "dia", "noche", "casa", "familia", "amigo", "juego", "risa",
+            "bien", "bello", "fresco", "libre", "abierto", "cerrado", "alto", "bajo", "grande", "pequeno",
+            "rapido", "lento", "correr", "caminar", "hablar", "cantar", "bailar", "leer", "escribir", "aprender",
+            "trabajo", "ayuda", "dar", "tomar", "hacer", "encontrar", "perder", "guardar", "intentar", "cierto",
+            "seguro", "luz", "oscuro", "suave", "duro", "frio", "caliente", "mojado", "seco", "nuevo",
+            "viejo", "igual", "diferente", "correcto", "incorrecto", "si", "no", "uno", "dos", "tres",
+            "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez", "once", "doce", "hoy",
+            "manana", "ayer", "manana", "tarde", "noche", "verano", "invierno", "primavera", "otono",
+            "rojo", "azul", "verde", "amarillo", "negro", "blanco", "bonito", "listo", "inteligente", "valiente",
+            "tranquilo", "ruidoso", "claro", "nublado", "ventoso", "lluvioso", "nevado", "feliz", "triste", "enojado",
+            "cansado", "hambriento", "sediento", "despierto", "dormido", "ocupado", "perezoso", "listo", "estable", "ir",
+            "abanico", "abeja", "abrazo", "acabar", "acento", "acera", "acido", "actor", "agua", "aguila", "ahora", "aire", "ajeno", "ajo", "ala", "alba",
+            "aldea", "alegre", "alga", "algo", "alma", "alto", "amanecer", "amigo", "ancho", "andar", "anillo", "animo", "antes", "anza", "apodo", "apoyo",
+            "aquel", "arena", "arma", "arte", "asco", "aseo", "asilo", "asno", "astro", "ataud", "atril", "auge", "aula", "ave", "ayer", "ayuda",
+            "azul", "bache", "baile", "bajar", "balon", "banco", "banda", "barco", "barra", "base", "basto", "bata", "bazar", "bebe", "beso", "bien", "bicho",
+            "boda", "boina", "bola", "bolsa", "bomba", "bonito", "borde", "bosque", "bote", "boveda", "bravo", "brecha", "brisa", "broma", "bruto", "bueno", "burla",
+            "buzon", "cabal", "cacao", "cada", "caer", "caja", "cal", "calma", "calor", "cama", "cambio", "canal", "canoa", "canon", "canto", "capaz", "cara",
+            "cardio", "carga", "carne", "casa", "caso", "casta", "catorce", "causa", "cazo", "cebra", "ceder", "celda", "cena", "ceniza", "cerca", "cerdo", "cesar",
+            "chacal", "chapa", "cheque", "chico", "china", "chispa", "chiste", "chivo", "choque", "chulo", "chupar", "ciclo", "cielo", "cifra", "cita", "civil", "clamor",
+            "clase", "clave", "clima", "cobro", "coche", "codo", "cofre", "coito", "colmo", "color", "colza", "comal", "conde", "conga", "coral", "corcel", "cordon",
+            "coro", "costa", "creer", "crema", "cria", "cruce", "crudo", "cuadro", "cuarto", "cubo", "cuco", "cueva", "culpa", "culto", "cuna", "curva", "cutis"
+        ];
+
+
+        const mixedLanguageWords = [
+            "amor", "soleil", "luna", "estrella", "bosque", "rio", "montana", "jardin", "libro", "musica",
+            "freiheit", "wasser", "himmel", "erde", "liebe", "traum", "freund", "glueck", "sonne", "mond",
+            "vino", "acqua", "terra", "fuoco", "amore", "sogno", "amico", "felicita", "sole", "luna",
+            "shui", "huo", "tu", "mu", "jin", "ai", "meng", "pengyou", "kuaile", "taiyang", "yueliang",
+            "love", "water", "sky", "earth", "dream", "friend", "happiness", "sun", "moon", "star",
+            "kawa", "woda", "niebo", "ziemia", "marzenie", "przyjaciel", "szczescie", "slonce", "ksiezyc", "gwiazda",
+            "amour", "sonne", "luna", "etoile", "ciel", "mer", "baum", "fleur", "joie", "paix",
+            "bonheur", "zeit", "jahr", "tag", "nacht", "maison", "famille", "freund", "spiel", "rire",
+            "gut", "beau", "frisch", "libre", "ouvert", "ferme", "hoch", "bas", "grand", "petit",
+            "vite", "langsam", "laufen", "gehen", "parler", "chanter", "danser", "lire", "ecrire", "apprendre",
+            "travail", "hilfe", "geben", "nehmen", "machen", "finden", "verlieren", "behalten", "versuchen", "wahr",
+            "sicher", "hell", "dunkel", "weich", "hart", "kalt", "heiss", "nass", "trocken", "neu",
+            "alt", "gleich", "anders", "richtig", "falsch", "ja", "nein", "eins", "zwei", "drei",
+            "vier", "fuenf", "sechs", "sieben", "acht", "neun", "zehn", "elf", "zwoelf", "heute",
+            "morgen", "gestern", "morgen", "abend", "nacht", "sommer", "winter", "fruehling", "herbst",
+            "rot", "blau", "gruen", "gelb", "schwarz", "weiss", "huebsch", "klug", "schlau", "tapfer",
+            "ruhig", "laut", "klar", "bewoelkt", "windig", "regnerisch", "schneebedeckt", "gluecklich", "traurig", "aergerlich",
+            "muede", "hungrig", "durstig", "wach", "schlafend", "beschaeftigt", "faul", "bereit", "stabil", "gehen",
+            "amor", "sol", "luna", "estrella", "bosque", "rio", "montana", "jardin", "libro", "musica",
+            "libertad", "agua", "cielo", "tierra", "amor", "sueno", "amigo", "felicidad", "sol", "luna",
+            "vino", "acqua", "terra", "fuoco", "amore", "sogno", "amico", "felicita", "sole", "luna",
+            "shui", "huo", "tu", "mu", "jin", "ai", "meng", "pengyou", "kuaile", "taiyang", "yueliang",
+            "love", "water", "sky", "earth", "dream", "friend", "happiness", "sun", "moon", "star",
+            "kawa", "woda", "niebo", "ziemia", "marzenie", "przyjaciel", "szczescie", "slonce", "ksiezyc", "gwiazda",
+            "amour", "soleil", "lune", "etoile", "ciel", "mer", "arbre", "fleur", "joie", "paix",
+            "bonheur", "temps", "annee", "jour", "nuit", "maison", "famille", "ami", "jeu", "rire",
+            "bien", "beau", "frais", "libre", "ouvert", "ferme", "haut", "bas", "grand", "petit",
+            "vite", "langsam", "laufen", "gehen", "parler", "chanter", "danser", "lire", "ecrire", "apprendre",
+            "travail", "hilfe", "geben", "nehmen", "machen", "finden", "verlieren", "behalten", "versuchen", "wahr",
+            "sicher", "hell", "dunkel", "weich", "hart", "kalt", "heiss", "nass", "trocken", "neu",
+            "alt", "gleich", "anders", "richtig", "falsch", "ja", "nein", "eins", "zwei", "drei",
+            "vier", "fuenf", "sechs", "sieben", "acht", "neun", "zehn", "elf", "zwoelf", "heute",
+            "morgen", "gestern", "morgen", "abend", "nacht", "sommer", "winter", "fruehling", "herbst",
+            "rot", "blau", "gruen", "gelb", "schwarz", "weiss", "huebsch", "klug", "schlau", "tapfer",
+            "ruhig", "laut", "klar", "bewoelkt", "windig", "regnerisch", "schneebedeckt", "gluecklich", "traurig", "aergerlich",
+            "muede", "hungrig", "durstig", "wach", "schlafend", "beschaeftigt", "faul", "bereit", "stabil", "gehen",
+            "amor", "sonne", "luna", "estrella", "bosque", "rio", "montana", "jardin", "libro", "musica",
+            "libertad", "agua", "cielo", "tierra", "amor", "sueno", "amigo", "felicidad", "sol", "luna",
+            "vino", "acqua", "terra", "fuoco", "amore", "sogno", "amico", "felicita", "sole", "luna",
+            "shui", "huo", "tu", "mu", "jin", "ai", "meng", "pengyou", "kuaile", "taiyang", "yueliang",
+            "love", "water", "sky", "earth", "dream", "friend", "happiness", "sun", "moon", "star",
+            "kawa", "woda", "niebo", "ziemia", "marzenie", "przyjaciel", "szczescie", "slonce", "ksiezyc", "gwiazda",
+            "amour", "soleil", "lune", "etoile", "ciel", "mer", "arbre", "fleur", "joie", "paix",
+            "bonheur", "temps", "annee", "jour", "nuit", "maison", "famille", "ami", "jeu", "rire",
+            "bien", "beau", "frais", "libre", "ouvert", "ferme", "haut", "bas", "grand", "petit",
+            "vite", "langsam", "laufen", "gehen", "parler", "chanter", "danser", "lire", "ecrire", "apprendre",
+            "travail", "hilfe", "geben", "nehmen", "machen", "finden", "verlieren", "behalten", "versuchen", "wahr",
+            "sicher", "hell", "dunkel", "weich", "hart", "kalt", "heiss", "nass", "trocken", "neu",
+            "alt", "gleich", "anders", "richtig", "falsch", "ja", "nein", "eins", "zwei", "drei",
+            "vier", "fuenf", "sechs", "sieben", "acht", "neun", "zehn", "elf", "zwoelf", "heute",
+            "morgen", "gestern", "morgen", "abend", "nacht", "sommer", "winter", "fruehling", "herbst",
+            "rot", "blau", "gruen", "gelb", "schwarz", "weiss", "huebsch", "klug", "schlau", "tapfer",
+            "ruhig", "laut", "klar", "bewoelkt", "windig", "regnerisch", "schneebedeckt", "gluecklich", "traurig", "aergerlich",
+            "muede", "hungrig", "durstig", "wach", "schlafend", "beschaeftigt", "faul", "bereit", "stabil", "gehen"
+            ];
+
+        function updatePhraseLengthValue(length) {
+            phraseLengthValue.textContent = `${length} word${length > 1 ? 's' : ''}`;
+        }
+
+        function generatePassphrase() {
+            const length = parseInt(phraseLengthSlider.value);
+            updatePhraseLengthValue(length);
+            const complexity = wordComplexitySelect.value;
+            const separator = separatorSelect.value;
+            let words = [];
+            let wordList = [];
+
+            if (complexity === "easy") {
+                wordList = easyWords;
+            } else if (complexity === "hard") {
+                wordList = hardWords;
+            } else if (complexity === "french") {
+                wordList = frenchWords;
+            } else if (complexity === "german") {
+                wordList = germanWords;
+            } else if (complexity === "spanish") {
+                wordList = spanishWords;
+            }
+             else if (complexity === "mixed") {
+                wordList = mixedLanguageWords;
+            }
+            else {
+                wordList = englishWords;
+            }
+
+
+            for (let i = 0; i < length; i++) {
+                const randomIndex = Math.floor(Math.random() * wordList.length);
+                words.push(wordList[randomIndex]);
+            }
+
+            generatedPassphraseDisplay.textContent = words.join(separator);
+        }
+
+        phraseLengthSlider.addEventListener("input", () => {
+            updatePhraseLengthValue(parseInt(phraseLengthSlider.value));
+            generatePassphrase();
+        });
+
+        separatorSelect.addEventListener("change", generatePassphrase);
+        wordComplexitySelect.addEventListener("change", generatePassphrase);
+
+        // Initial passphrase generation
+        generatePassphrase();
+    </script>
+</body>
+</html>
